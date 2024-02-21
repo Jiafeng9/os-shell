@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 		int terms_length = split_length(cmdline, " ");
 		char **terms = split(cmdline, " ");
 
-		if (strcmp(terms[0], "/") != 0)
+		if (terms[0][0] != '/')
 		{
 			if (strcmp(terms[0], "exit") == 0)
 			{
@@ -80,6 +80,7 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
+
 			else
 			{ // check current environment
 				char cwd[100];
@@ -89,31 +90,57 @@ int main(int argc, char *argv[])
 				int found = 0;
 				if (access(current_path, X_OK) != -1)
 				{
-					pid_t child_pid = fork();
-					if (child_pid == 0)
-					{ // Child process
-						char *newargs[terms_length + 1];
-						newargs[0] = current_path;
-						for (int i = 0; i < terms_length; i++)
-						{
-							newargs[i + 1] = terms[i + 1];
+					// int len_last_string = strlen(terms[terms_length - 1]);
+					// printf("%d \n", terms[terms_length - 1][len_last_string - 1]);
+					// if (terms[terms_length - 1][len_last_string - 1] == '&')
+					if (strcmp(terms[terms_length - 1], "&") == 0)
+					{
+						found = 1;
+						pid_t child_pid = fork();
+						if (child_pid == 0)
+						{ // Child process
+							terms_length--;
+							char *newargs[terms_length + 1];
+							newargs[0] = current_path;
+							for (int i = 0; i < terms_length; i++)
+							{
+								newargs[i + 1] = terms[i + 1];
+							}
+							newargs[terms_length] = NULL;
+							// newargs[terms_length - 1][len_last_string - 1] = '\0';
+							// newargs[terms_length - 1] = NULL;
+							execv(current_path, newargs);
+							// perror("execv");
 						}
-						newargs[terms_length] = NULL;
-						execv(current_path, newargs);
-						// perror("execv");
 					}
-					else if (child_pid != 0)
-					{ // Parent process
-						wait(NULL);
+					else
+					{
+						found = 1;
+						pid_t child_pid = fork();
+						if (child_pid == 0)
+						{ // Child process
+							char *newargs[terms_length + 1];
+							newargs[0] = current_path;
+							for (int i = 0; i < terms_length; i++)
+							{
+								newargs[i + 1] = terms[i + 1];
+							}
+							newargs[terms_length] = NULL;
+							execv(current_path, newargs);
+							// perror("execv");
+						}
+						else if (child_pid != 0)
+						{ // Parent process
+							wait(NULL);
+						}
 					}
 				}
+
 				else
 				{
 					//  and then check the Path environment
 					char *path_env = getenv("PATH");
-
 					char *path = strdup(path_env); // Make a copy of PATH
-
 					char *split_path = strtok(path, ":");
 
 					while (split_path != NULL)
@@ -122,29 +149,56 @@ int main(int argc, char *argv[])
 						snprintf(final_path, MAX_PROC, "%s/%s", split_path, terms[0]);
 						if (access(final_path, X_OK) != -1)
 						{
-							pid_t child_pid = fork();
-							if (child_pid == 0)
-							{ // Child process
-								char *newargs[terms_length + 1];
-								newargs[0] = final_path;
-								for (int i = 0; i < terms_length; i++)
-								{
-									newargs[i + 1] = terms[i + 1];
-								}
-								newargs[terms_length] = NULL;
-
-								execv(final_path, newargs);
-								// perror("execv");
-							}
-							else if (child_pid > 0)
+							// int len_last_string = strlen(terms[terms_length - 1]);
+							// if (strcmp(terms[terms_length - 1], "&") == 0)
+							if (strcmp(terms[terms_length - 1], "&") == 0)
 							{
-								wait(NULL);
-								found = 1;
-								break;
+								terms_length--;
+								pid_t child_pid = fork();
+								if (child_pid == 0)
+								{ // Child process
+									char *newargs[terms_length + 1];
+									newargs[0] = final_path;
+									for (int i = 0; i < terms_length; i++)
+									{
+										newargs[i + 1] = terms[i + 1];
+									}
+									newargs[terms_length] = NULL;
+
+									execv(final_path, newargs);
+									exit(EXIT_FAILURE);
+									// perror("execv");
+								}
+								else if (child_pid != 0)
+								{
+									wait(NULL);
+									found = 1;
+									break;
+								}
 							}
 							else
 							{
-								printf("Fork failed \n");
+								pid_t child_pid = fork();
+								if (child_pid == 0)
+								{ // Child process
+									char *newargs[terms_length + 1];
+									newargs[0] = final_path;
+									for (int i = 0; i < terms_length; i++)
+									{
+										newargs[i + 1] = terms[i + 1];
+									}
+
+									newargs[terms_length] = NULL;
+									// newargs[terms_length - 1][len_last_string - 1] = '\0';
+									// newargs[terms_length - 1] = NULL;
+									execv(final_path, newargs);
+									// perror("execv");
+								}
+								else if (child_pid != 0)
+								{
+									found = 1;
+									break;
+								}
 							}
 						}
 						split_path = strtok(NULL, ":"); // Move to the next part of the PATH
@@ -153,11 +207,70 @@ int main(int argc, char *argv[])
 				}
 				if (!found)
 				{
-					printf("Command not found\n");
+					printf("%s Command not found\n", terms[0]);
 				}
+				free(cmdline);
 			}
 		}
-		free(cmdline);
+
+		else if (terms[0][0] == '/')
+		{
+			if (access(terms[0], X_OK) != -1)
+			{
+				// int len_last_string = strlen(terms[terms_length - 1]);
+				//  printf("%d \n", terms[terms_length - 1][len_last_string - 1]);
+				//   printf("%d \n",'&');
+				printf("%d \n", strcmp(terms[terms_length - 1], "&") == 0);
+				if (strcmp(terms[terms_length - 1], "&") == 0)
+
+				{
+					// Remove the '&' from the arguments
+					terms_length--;
+					// printf("%d \n", strcmp(terms[terms_length - 1], "&"));
+					pid_t child_pid = fork();
+					if (child_pid == 0)
+					{ // Child process
+						char *newargs[terms_length + 1];
+						newargs[0] = terms[0];
+						for (int i = 0; i < terms_length; i++)
+						{
+							newargs[i + 1] = terms[i + 1];
+						}
+						newargs[terms_length] = NULL;
+						// newargs[terms_length - 1][len_last_string - 1] = '\0';
+						// newargs[terms_length - 1] = NULL;
+						execv(terms[0], newargs);
+						// perror("execv");
+					}
+				}
+				else
+				{
+					pid_t child_pid = fork();
+					if (child_pid == 0)
+					{ // Child process
+						char *newargs[terms_length + 1];
+						newargs[0] = terms[0];
+						for (int i = 0; i < terms_length; i++)
+						{
+							newargs[i + 1] = terms[i + 1];
+						}
+						newargs[terms_length] = NULL;
+						execv(terms[0], newargs);
+						// perror("execv");
+					}
+					else if (child_pid != 0)
+					{ // Parent process
+						wait(NULL);
+					}
+				}
+			}
+
+			else
+			{
+				printf("%s Command not found! \n", terms[0]);
+			}
+		}
+		// free(cmdline);
 	}
 	return 0;
 }
