@@ -81,5 +81,49 @@ char** split(char *str, char *delim){
     return array;
 }
 
+/*
+char** split(char *str, char *delim) {
+    int num_tokens = 0;
+    char *s = strdup(str);
+    if (!s) { // Check for allocation failure
+        return NULL;
+    }
 
+    // Count the tokens
+    char *token = strtok(s, delim);
+    while (token != NULL) {
+        num_tokens++;
+        token = strtok(NULL, delim);
+    }
 
+    // Allocate the array of pointers with an additional slot for the NULL terminator
+    char **array = (char **)malloc((num_tokens + 1) * sizeof(char *));
+    if (!array) { // Check for allocation failure
+        free(s);
+        return NULL;
+    }
+
+    // Split the string into tokens and allocate space for each token
+    strcpy(s, str); // Reset s to the original string content
+    int i = 0;
+    token = strtok(s, delim);
+    while (token != NULL && i < num_tokens) {
+        array[i] = strdup(token); // Allocate and copy each token
+        if (!array[i]) { // Check for allocation failure
+            // Free previously allocated memory
+            while (i > 0) {
+                free(array[--i]);
+            }
+            free(array);
+            free(s);
+            return NULL;
+        }
+        i++;
+        token = strtok(NULL, delim);
+    }
+    array[num_tokens] = NULL; // Null-terminate the array
+
+    free(s); // Free the duplicated string
+    return array;
+}
+*/

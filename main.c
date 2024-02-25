@@ -95,6 +95,7 @@ int main(int argc, char *argv[])
 					// if (terms[terms_length - 1][len_last_string - 1] == '&')
 					if (strcmp(terms[terms_length - 1], "&") == 0)
 					{
+						terms_length--;
 						found = 1;
 						pid_t child_pid = fork();
 						if (child_pid == 0)
@@ -153,6 +154,8 @@ int main(int argc, char *argv[])
 							// if (strcmp(terms[terms_length - 1], "&") == 0)
 							if (strcmp(terms[terms_length - 1], "&") == 0)
 							{
+															//printf("%s \n",terms[terms_length - 1]);
+
 								terms_length--;
 								pid_t child_pid = fork();
 								if (child_pid == 0)
@@ -171,7 +174,7 @@ int main(int argc, char *argv[])
 								}
 								else if (child_pid != 0)
 								{
-									wait(NULL);
+									//wait(NULL);
 									found = 1;
 									break;
 								}
@@ -196,6 +199,7 @@ int main(int argc, char *argv[])
 								}
 								else if (child_pid != 0)
 								{
+									wait(NULL);
 									found = 1;
 									break;
 								}
@@ -207,7 +211,7 @@ int main(int argc, char *argv[])
 				}
 				if (!found)
 				{
-					printf("%s Command not found\n", terms[0]);
+					printf("%s not found\n", terms[0]);
 				}
 				free(cmdline);
 			}
@@ -220,7 +224,7 @@ int main(int argc, char *argv[])
 				// int len_last_string = strlen(terms[terms_length - 1]);
 				//  printf("%d \n", terms[terms_length - 1][len_last_string - 1]);
 				//   printf("%d \n",'&');
-				printf("%d \n", strcmp(terms[terms_length - 1], "&") == 0);
+				//printf("%d \n", strcmp(terms[terms_length - 1], "&") == 0);
 				if (strcmp(terms[terms_length - 1], "&") == 0)
 
 				{
@@ -267,7 +271,7 @@ int main(int argc, char *argv[])
 
 			else
 			{
-				printf("%s Command not found! \n", terms[0]);
+				printf("%s  not found! \n", terms[0]);
 			}
 		}
 		// free(cmdline);
